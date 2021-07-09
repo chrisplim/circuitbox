@@ -19,6 +19,10 @@ class FakeServer
     FakeServer.instance.create(port, result)
   end
 
+  def self.create_timeout(port, timeout_sec)
+    FakeServer.instance.create_timeout(port, timeout_sec)
+  end
+
   def self.shutdown
     FakeServer.instance.shutdown
   end
@@ -31,6 +35,15 @@ class FakeServer
   def create(port, result)
     @servers << Thread.new do
       Rack::Handler::WEBrick.run(proc { |_env| result },
+                                 Port: port,
+                                 AccessLog: [],
+                                 Logger: WEBrick::Log.new(File::NULL))
+    end
+    sleep 0.5 # wait for the server to spin up
+  end
+  def create_timeout(port, timeout_sec)
+    @servers << Thread.new do
+      Rack::Handler::WEBrick.run(proc { |_env| sleep(timeout_sec) },
                                  Port: port,
                                  AccessLog: [],
                                  Logger: WEBrick::Log.new(File::NULL))
